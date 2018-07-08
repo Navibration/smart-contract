@@ -1,7 +1,8 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract NaviCoin is Ownable, StandardToken {
     // ERC20 requirements
@@ -16,7 +17,7 @@ contract NaviCoin is Ownable, StandardToken {
 
     event Issue(address recepient, uint amount);
 
-    function NaviCoin() public {
+    constructor() public {
         name = "NAVI COIN";
         symbol = "NAVI";
         decimals = 8;
@@ -40,8 +41,8 @@ contract NaviCoin is Ownable, StandardToken {
     // creates new amount of navis
     function issue(address _recepient, uint256 _amount) public onlyOwner() {
         require(!releasedForTransfer);
-        balances[_recepient] += _amount;
-        totalSupply += _amount;
-        Issue(_recepient, _amount);
+        balances[_recepient] = balances[_recepient].add(_amount);
+        totalSupply = totalSupply.add(_amount);
+        emit Issue(_recepient, _amount);
     }
 }

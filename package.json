@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "wings-integration": "^1.1.4",
-    "zeppelin-solidity": "1.9.0"
+    "wings-integration": "^1.2.0",
+    "zeppelin-solidity": "1.10.0"
   }
 }

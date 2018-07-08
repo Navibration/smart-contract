@@ -1,9 +1,12 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/wings-integration/contracts/BasicCrowdsale.sol";
 import "./NaviCoin.sol";
 
 contract NaviCrowdSale is BasicCrowdsale {
+    using SafeMath for uint256;
+    
     // Crowdsale participants
     mapping(address => uint256) participants;
 
@@ -20,7 +23,7 @@ contract NaviCrowdSale is BasicCrowdsale {
 
     event SellToken(address recepient, uint tokensSold, uint value);
 
-    function NaviCrowdSale(
+    constructor(
         NaviCoin _token
     )
     public
@@ -78,18 +81,18 @@ contract NaviCrowdSale is BasicCrowdsale {
         whenCrowdsaleAlive() // in active state
     {
         require(whiteList[_recepient] <= _value);
-        uint256 newTotalCollected = totalCollected + _value;
+        uint256 newTotalCollected = totalCollected.add(_value);
 
         if (hardCap < newTotalCollected) {
             // don't sell anything above the hard cap
 
-            uint256 refund = newTotalCollected - hardCap;
-            uint256 diff = _value - refund;
+            uint256 refund = newTotalCollected.sub(hardCap);
+            uint256 diff = _value.sub(refund);
 
             // send the ETH part which exceeds the hard cap back to the buyer
             _recepient.transfer(refund);
             _value = diff;
-            newTotalCollected = totalCollected + _value;
+            newTotalCollected = totalCollected.add(_value);
         }
 
         // Apply Navi Sale bonuses
@@ -98,50 +101,50 @@ contract NaviCrowdSale is BasicCrowdsale {
         uint256 currentBonus;
         if (totalCollected < firstBonus) {
             if (newTotalCollected > firstBonus) {
-                bonusDiff = newTotalCollected - firstBonus;
-                currentBonus = _value - bonusDiff;
-                valueWithBonus += currentBonus / 100 * 20;
+                bonusDiff = newTotalCollected.sub(firstBonus);
+                currentBonus = _value.sub(bonusDiff);
+                valueWithBonus = valueWithBonus.add(currentBonus.div(100).mul(20));
 
                 if (bonusDiff > secondBonus) {
-                    bonusDiff = bonusDiff - secondBonus;
-                    currentBonus = _value - bonusDiff;
-                    valueWithBonus += currentBonus / 100 * 10;
-                    valueWithBonus += bonusDiff;
+                    bonusDiff = bonusDiff.sub(secondBonus);
+                    currentBonus = _value.sub(bonusDiff);
+                    valueWithBonus = valueWithBonus.add(currentBonus.div(100).mul(10));
+                    valueWithBonus = valueWithBonus.add(bonusDiff);
                 } else {
-                    valueWithBonus += bonusDiff / 100 * 10;
+                    valueWithBonus = valueWithBonus.add(bonusDiff.div(100).mul(10));
                 }
 
             } else {
-                valueWithBonus += valueWithBonus / 100 * 20;
+                valueWithBonus = valueWithBonus.add(bonusDiff.div(100).mul(20));
             }
         } else if (totalCollected < secondBonus) {
             if (newTotalCollected > secondBonus) {
-                bonusDiff = newTotalCollected - secondBonus;
-                currentBonus = _value - bonusDiff;
-                valueWithBonus += currentBonus / 100 * 10;
-                valueWithBonus += bonusDiff;
+                bonusDiff = newTotalCollected.sub(secondBonus);
+                currentBonus = _value.sub(bonusDiff);
+                valueWithBonus = valueWithBonus.add(currentBonus.div(100).mul(10));
+                valueWithBonus = valueWithBonus.add(bonusDiff);
             } else {
-                valueWithBonus += valueWithBonus / 100 * 10;
+                valueWithBonus = valueWithBonus.add(valueWithBonus.div(100).mul(10));
             }
         }
 
         // token amount as per price
-        uint256 tokensSold = (valueWithBonus * tokenUnit) / buyPrice;
+        uint256 tokensSold = (valueWithBonus.mul(tokenUnit)).div(buyPrice);
 
 
         // create new tokens for this buyer
         crowdsaleToken.issue(_recepient, tokensSold);
 
-        SellToken(_recepient, tokensSold, _value);
+        emit SellToken(_recepient, tokensSold, _value);
 
         // remember the buyer so he/she/it may refund its ETH if crowdsale failed
-        participants[_recepient] += _value;
+        participants[_recepient] = participants[_recepient].add(_value);
 
         // update total ETH collected
-        totalCollected += _value;
+        totalCollected = totalCollected.add(_value);
 
         // update total tokens sold
-        totalSold += tokensSold;
+        totalSold = totalSold.add(tokensSold);
     }
 
     // project's owner withdraws ETH funds to the funding address upon successful crowdsale
