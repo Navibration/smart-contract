@@ -21,7 +21,16 @@ contract NaviCrowdSale is BasicCrowdsale {
     uint256 firstBonus = (1000 * (10 ** 18));
     uint256 secondBonus = (2000 * (10 ** 18));
 
+    mapping (bytes4 => bool) inUse;
+
     event SellToken(address recepient, uint tokensSold, uint value);
+
+    modifier preventReentrance {
+        require(!inUse[msg.sig]);
+        inUse[msg.sig] = true;
+        _;
+        inUse[msg.sig] = false;
+    }
 
     constructor(
         NaviCoin _token
@@ -76,6 +85,7 @@ contract NaviCrowdSale is BasicCrowdsale {
         address _recepient, 
         uint256 _value
     ) internal
+        preventReentrance
         hasBeenStarted()     // crowdsale started
         hasntStopped()       // wasn't cancelled by owner
         whenCrowdsaleAlive() // in active state
@@ -156,7 +166,7 @@ contract NaviCrowdSale is BasicCrowdsale {
     hasntStopped()  // crowdsale wasn't cancelled
     whenCrowdsaleSuccessful() // crowdsale completed successfully
     {
-        require(_amount <= this.balance);
+        require(_amount <= address(this).balance);
         fundingAddress.transfer(_amount);
     }
 
