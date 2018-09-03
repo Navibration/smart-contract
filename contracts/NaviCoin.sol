@@ -18,7 +18,7 @@ contract NaviCoin is Ownable, StandardToken {
     event Issue(address recepient, uint amount);
 
     constructor() public {
-        name = "NAVI COIN";
+        name = "NaviCoin";
         symbol = "NAVI";
         decimals = 8;
     }
@@ -44,5 +44,6 @@ contract NaviCoin is Ownable, StandardToken {
         balances[_recepient] = balances[_recepient].add(_amount);
         totalSupply = totalSupply.add(_amount);
         emit Issue(_recepient, _amount);
+        emit Transfer(address(0), _recepient, _amount);
     }
 }
