@@ -30,6 +30,7 @@ contract NaviCrowdSale is Ownable {
     public
     {
         maxSupply = 30000000000000000;
+        totalCollected = 1625000000000000;
         crowdsaleToken = _token;
     }
 
